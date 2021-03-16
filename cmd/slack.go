@@ -37,7 +37,7 @@ func (msg *SlackMessage) SendSlack(cfg *config.Config) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Authorization", "Bearer "+cfg.Slack.Token)
+	req.Header.Set("Authorization", "Bearer "+cfg.Slack.Token)
 
 	client := new(http.Client)
 	resp, err := client.Do(req)
@@ -47,9 +47,22 @@ func (msg *SlackMessage) SendSlack(cfg *config.Config) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = ioutil.ReadAll(resp.Body)
+	res, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Failed to parse response.err = %v", err)
+		return err
+	}
+
+	resBinder := struct {
+		Ok bool `json:"ok"`
+		ResponseMetadata struct {
+			Warnings []string `json:"warnings"`
+		} `json:"response_metadata"`
+	}{}
+
+	err = json.Unmarshal(res,&resBinder)
+	if err != nil {
+		log.Println("Failed to unmarshal error")
 		return err
 	}
 
