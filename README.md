@@ -1,10 +1,22 @@
 # slack-message-client-kube
 kanbanで受け取ったデータをslackに通知するマイクロサービスです。
 
+## 動作環境
+動作には以下の環境であることを前提とします。
+
+- OS: Linux
+  
+- CPU: Intel64/AMD64/ARM64
+
+最低限スペック  
+- CPU: 2 core  
+  
+- memory: 4 GB
 
 ## 起動方法
 docker imageのビルド
 ```
+$ git clone {slack-message-client-kube}
 $ cd ~/path/to/slack-message-client-kube
 $ bash docker-build.sh
 ```
@@ -19,17 +31,6 @@ env:
   CHANNEL_ID: XXX
 ```
   
-## 動作環境
-動作には以下の環境であることを前提とします。
-
-```
-- OS: Linux
-- CPU: Intel64/AMD64/ARM64
-
-最低限スペック  
-- CPU: 2 core  
-- memory: 4 GB
-```
 
 ## 環境変数
 - CHANNEL_ID: 通知先チャンネルのID
