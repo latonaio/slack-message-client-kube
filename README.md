@@ -1,27 +1,15 @@
 # slack-message-client-kube
-kanbanで受け取ったデータをslackに通知するマイクロサービスです。
+エッジのメッセージデータをslackに通知するマイクロサービスです。
 
-## 動作環境
-動作には以下の環境であることを前提とします。また AION のリソースが必要です。[こちら](https://github.com/latonaio/aion-core)を参照してください。
-
-- OS: Linux
-  
-- CPU: Intel64/AMD64/ARM64
-
-最低限スペック  
-- CPU: 2 core  
-  
-- memory: 4 GB
 
 ## 起動方法
 docker imageのビルド
 ```
-$ git clone {slack-message-client-kube}
 $ cd ~/path/to/slack-message-client-kube
 $ bash docker-build.sh
 ```
 
-project.yamlに次の設定を追加してください。
+aion-service-definitions のservices.yml に次の設定を追加してください。
 ```yaml
 slack-message-client-kube:
 startup: yes
@@ -31,13 +19,24 @@ env:
   CHANNEL_ID: XXX
 ```
   
+## 動作環境
+動作には以下の環境であることを前提とします。
+
+```
+- OS: Linux
+- CPU: Intel64/AMD64/ARM64
+
+最低限スペック  
+- CPU: 2 core  
+- memory: 4 GB
+```
 
 ## 環境変数
 - CHANNEL_ID: 通知先チャンネルのID
 - TOKEN: slack apiのOAuthトークン
 
 ## Input  
-kanbanデータを受け取ります。
+メッセージデータを受け取ります。
 必要パラメータ：
 ```
 - pod_name string
