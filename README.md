@@ -9,14 +9,20 @@ $ cd ~/path/to/slack-message-client-kube
 $ bash docker-build.sh
 ```
 
-aion-service-definitions のservices.yml に次の設定を追加してください。
+`slack-message-client-kube.yml` に次の設定を追加してください。
+
+`QUEUE_FROM` で指定するキューは事前に作成が必要です。
+
 ```yaml
-slack-message-client-kube:
-startup: yes
-always: yes
 env:
-  TOKEN: XXXXX
-  CHANNEL_ID: XXX
+- name: CHANNEL_ID
+  value: "チャンネル ID"
+- name: TOKEN
+  value: "Slack App トークン"
+- name: RABBITMQ_URL
+  value: "amqp://username:password@hostname:5672/virtualhost"
+- name: QUEUE_FROM
+  value: "キュー名"
 ```
   
 ## 動作環境
@@ -34,6 +40,8 @@ env:
 ## 環境変数
 - CHANNEL_ID: 通知先チャンネルのID
 - TOKEN: slack apiのOAuthトークン
+- RABBITMQ_URL: RabbitMQのURL
+- QUEUE_FROM: RabbitMQの受信元キュー名
 
 ## Input  
 メッセージデータを受け取ります。
@@ -41,11 +49,11 @@ env:
 ```
 - pod_name string
 - status string
+- level string
 ```
   
 ## Output  
 受け取ったデータを整形してslackに通知します。
-メッセージの大量送信を防ぐために、同一podからのメッセージは5回までとなっています。
 メッセージのlevelが"warning"のものに限り、slackにメッセージを送信します。
 
 ## slack連携方法

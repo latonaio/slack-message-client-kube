@@ -9,7 +9,7 @@ IMAGE_NAME="slack-message-client-kube"
 DOCKERFILE_NAME="Dockerfile"
 
 # build servicebroker
-DOCKER_BUILDKIT=1 docker build --secret id=ssh,src=$HOME/.ssh/bitbucket/id_rsa -f . -t ${REPOSITORY_NAME}/${IMAGE_NAME}:"${DATE}" .
+DOCKER_BUILDKIT=1 docker build --secret id=ssh,src=$HOME/.ssh/id_rsa -f . -t ${REPOSITORY_NAME}/${IMAGE_NAME}:"${DATE}" .
 docker tag ${REPOSITORY_NAME}/${IMAGE_NAME}:"${DATE}" ${REPOSITORY_NAME}/${IMAGE_NAME}:latest
 
 if [[ $PUSH == "push" ]]; then

@@ -2,49 +2,93 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
+	"os"
 	"slack-message-client-kube/cmd"
 	"slack-message-client-kube/config"
 	"syscall"
 
-	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
+	"github.com/streadway/amqp"
 )
 
 const msName = "slack-message-client-kube"
+
+func failOnError(err error, errCh chan error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+		errCh <- err
+	}
+}
 
 func main() {
 	errCh := make(chan error, 1)
 	quiteCh := make(chan syscall.Signal, 1)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	c, err := msclient.NewKanbanClient(ctx)
-	if err != nil {
-		errCh <- err
-	}
-
-	kCh, err := c.GetKanbanCh(msName, c.GetProcessNumber())
-	if err != nil {
-		errCh <- err
-	}
+	_, cancel := context.WithCancel(context.Background())
 
 	cfg, err := config.New()
 
+	// 接続
+	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
+	failOnError(err, errCh, "Failed to open a channel")
+	defer conn.Close()
+
+	// チャンネル生成
+	ch, err := conn.Channel()
+	failOnError(err, errCh, "Failed to open a channel")
+	defer ch.Close()
+
+	// 参照する queue の存在確認
+	q, err := ch.QueueInspect(os.Getenv("QUEUE_FROM"))
+	failOnError(err, errCh, "queue does not exist")
+
+	// queue からメッセージの受け取り
+	msgs, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	failOnError(err, errCh, "Failed to register a consumer")
+
+	if err = ch.Qos(1, 0, false); err != nil {
+		log.Printf("failed to set prefetch count: %v", err)
+	}
+
 	go func() {
-		for kanban := range kCh {
-			data, err := kanban.GetMetadataByMap()
+		for d := range msgs {
+			jsonData := map[string]interface{}{}
+			err := json.Unmarshal(d.Body, &jsonData)
 			if err != nil {
-				errCh <- err
+				log.Printf("JSON decode error: %v\n", err)
+			}
+			log.Printf("message : %v\n", jsonData)
+
+			if level := jsonData["level"].(string); level != "warning" {
+				d.Ack(false)
+				continue
 			}
 
-			msg := data["pod_name"].(string)
-			status := data["status"].(string)
-			level := data["level"].(string)
-			sm := cmd.BuildMessage(msg, status,level,cfg.Slack.ChannelId)
-			if err := sm.SendSlack(cfg); err != nil {
+			fmt.Printf("send message to channel %v\n", cfg.Slack.ChannelId)
+
+			if err := cmd.SendToSlack(
+				cfg.Slack.Token,
+				cfg.Slack.ChannelId,
+				"#ff6347",
+				"*Podの異常を検知*",
+				fmt.Sprintf("pod %s has failure in running. reason is %s", jsonData["pod_name"].(string), jsonData["status"].(string)),
+			); err != nil {
 				errCh <- err
+				d.Nack(false, false)
+				continue
 			}
 
+			d.Ack(false)
 		}
 	}()
 

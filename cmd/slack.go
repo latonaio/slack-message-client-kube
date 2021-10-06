@@ -3,90 +3,73 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"slack-message-client-kube/config"
 )
 
-type SlackMessage struct {
-	Channel     string       `json:"channel"`
-	Message     string       `json:"text"`
-	Attachments []Attachment `json:"attachments"`
-}
-
-type Attachment struct {
-	Color string `json:"color"`
-	Title string `json:"title"`
-	Text  string `json:"text"`
-}
-
-func (msg *SlackMessage) SendSlack(cfg *config.Config) error {
-	jsonString, err := json.Marshal(msg)
+func SendToSlack(token, channel, color, title, message string) error {
+	messageInterface := map[string]interface{}{
+		"channel": channel,
+		"text":    title,
+		"attachments": []interface{}{
+			map[string]interface{}{
+				"color": color,
+				"blocks": []interface{}{
+					map[string]interface{}{
+						"type": "section",
+						"text": map[string]interface{}{
+							"type": "plain_text",
+							"text": message,
+						},
+					},
+				},
+			},
+		},
+	}
+	messageJSON, err := json.Marshal(messageInterface)
 	if err != nil {
-		log.Printf("encoding error.err = %v", err)
-		return err
+		return fmt.Errorf("json marshal error %w", err)
 	}
 
 	endpoint := "https://slack.com/api/chat.postMessage"
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonString))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(messageJSON))
 	if err != nil {
-		log.Printf("Failed to create new request.err = %v", err)
-		return err
+		return fmt.Errorf("Failed to create new request.err = %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+cfg.Slack.Token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed to execugte request.err = %v", err)
-		return err
+		return fmt.Errorf("Failed to execugte request.err = %w", err)
 	}
 	defer resp.Body.Close()
 
 	res, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Failed to parse response.err = %v", err)
-		return err
+		return fmt.Errorf("Failed to parse response.err = %w", err)
 	}
 
-	resBinder := struct {
-		Ok bool `json:"ok"`
-		ResponseMetadata struct {
-			Warnings []string `json:"warnings"`
-		} `json:"response_metadata"`
-	}{}
+	resBody := map[string]interface{}{}
 
-	err = json.Unmarshal(res,&resBinder)
+	err = json.Unmarshal(res, &resBody)
 	if err != nil {
-		log.Println("Failed to unmarshal error")
-		return err
+		return fmt.Errorf("Failed to unmarshal error %w", err)
+	}
+	if _, exists := resBody["ok"]; !exists {
+		return errors.New("key ok is not found in response json")
+	}
+	if _, success := resBody["ok"].(bool); !success {
+		return errors.New("key ok is not boolean")
+	}
+	if isOK := resBody["ok"].(bool); !isOK {
+		return errors.New("ok is not true")
 	}
 
 	return nil
-}
 
-func BuildMessage(podName, status,level string, channel string) *SlackMessage {
-	var title string
-	if level == "warning" {
-		title = "Podの異常を検知"
-	} else {
-		return nil
-	}
-	ats := []Attachment{}
-	a := Attachment{
-		Color: "#ff6347",
-		Title: title,
-		Text:  fmt.Sprintf("pod %s has failure in running. reaon is %s", podName, status),
-	}
-	ats = append(ats, a)
-
-	return &SlackMessage{
-		Channel:     "#" + channel,
-		Message:     "pod running failure!",
-		Attachments: ats,
-	}
 }

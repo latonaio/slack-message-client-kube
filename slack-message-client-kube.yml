@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slack-message-client-kube
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels: 
+      run: slack-message-client-kube
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template: 
+    metadata: 
+      name: slack-message-client-kube
+      labels: 
+        run: slack-message-client-kube
+    spec: 
+      containers: 
+      - name: slack-message-client-kube
+        image: latonaio/slack-message-client-kube:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CHANNEL_ID
+          value: "xxxxxx"
+        - name: TOKEN
+          value: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        - name: RABBITMQ_URL
+          value: "amqp://guest:guest@rabbitmq:5672/omotebako"
+        - name: QUEUE_FROM
+          value: "hello"
