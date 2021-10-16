@@ -1,0 +1,10 @@
+{
+    "terminalName": "xxxxx",
+    "macAddress": "xx:xx:xx:xx:xx:xx",
+    "createdAt": "2021-10-16T03:13:27.539Z",
+    "imagePath": "/var/lib/aion/Data/direct-next-service_1/1634354006794.jpg",
+    "faceId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "responseData": {
+        "candidates": []
+    }
+ }

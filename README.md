@@ -30,7 +30,7 @@ env:
 
 ```
 - OS: Linux
-- CPU: Intel64/AMD64/ARM64
+- CPU: ARM/AMD/Intel
 
 最低限スペック  
 - CPU: 2 core  
@@ -44,7 +44,7 @@ env:
 - QUEUE_FROM: RabbitMQの受信元キュー名
 
 ## Input  
-メッセージデータを受け取ります。
+RabbitMQ からメッセージデータを受け取ります。
 必要パラメータ：
 ```
 - pod_name string
@@ -52,8 +52,22 @@ env:
 - level string
 ```
   
+入力データのサンプル は、inputs/sample.json にある通り、次の様式です。
+```
+{
+   "terminalName": "xxxxx",
+   "macAddress": "xx:xx:xx:xx:xx:xx",
+   "createdAt": "2021-10-16T03:13:27.539Z",
+   "imagePath": "/var/lib/aion/Data/direct-next-service_1/1634354006794.jpg",
+   "faceId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+   "responseData": {
+       "candidates": []
+   }
+}
+```
+  
 ## Output  
-受け取ったデータを整形してslackに通知します。
+データを整形してslackに通知します。
 メッセージのlevelが"warning"のものに限り、slackにメッセージを送信します。
 
 ## slack連携方法
