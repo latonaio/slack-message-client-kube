@@ -1,6 +1,6 @@
 module slack-message-client-kube
 
-go 1.15
+go 1.17
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
