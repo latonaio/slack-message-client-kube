@@ -29,5 +29,5 @@ spec:
           value: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         - name: RABBITMQ_URL
           value: "amqp://guest:guest@rabbitmq:5672/omotebako"
-        - name: QUEUE_FROM
+        - name: QUEUE_ORIGIN
           value: "hello"

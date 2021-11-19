@@ -11,7 +11,7 @@ $ bash docker-build.sh
 
 `slack-message-client-kube.yml` に次の設定を追加してください。
 
-`QUEUE_FROM` で指定するキューは事前に作成が必要です。
+`QUEUE_ORIGIN` で指定するキューは事前に作成が必要です。
 
 ```yaml
 env:
@@ -21,7 +21,7 @@ env:
   value: "Slack App トークン"
 - name: RABBITMQ_URL
   value: "amqp://username:password@hostname:5672/virtualhost"
-- name: QUEUE_FROM
+- name: QUEUE_ORIGIN
   value: "キュー名"
 ```
   
@@ -41,7 +41,7 @@ env:
 - CHANNEL_ID: 通知先チャンネルのID
 - TOKEN: slack apiのOAuthトークン
 - RABBITMQ_URL: RabbitMQのURL
-- QUEUE_FROM: RabbitMQの受信元キュー名
+- QUEUE_ORIGIN: RabbitMQの受信元キュー名
 
 ## Input  
 RabbitMQ からメッセージデータを受け取ります。
